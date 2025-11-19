@@ -29,10 +29,15 @@ jobs:
         cache: maven
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-
+    - name: Run unit tests
+      run: mvn test
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
       uses: advanced-security/maven-dependency-submission-action@571e99aab1055c2e71a1e2309b9691de18d6b7d6
+    - name: Set image tags
+      run: | 
+          echo "IMAGE_TAG=${{ github.sha }}" >> $GITHUB_ENV
+
     - name: Build and Push docker image
       uses: docker/login-action@v3
       with:
@@ -43,5 +48,14 @@ jobs:
       with:
           context: .
           push: true
-          tags: adhershan/app:latest
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+    - name: Scan image with Trivy
+      uses: aquasecurity/trivy-action@v1
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          format: 'table'
+          exit-code: '1'
         
