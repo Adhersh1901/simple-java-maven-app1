@@ -43,4 +43,5 @@ jobs:
       with:
           context: .
           push: true
+          tags: adhershan/app:latest
         
